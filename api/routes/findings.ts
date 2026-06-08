@@ -1,43 +1,20 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { AppDataSource } from '../src/config/data-source.js'
 import { Finding } from '../src/entities/Finding.js'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
 import { authorize } from '../src/middleware/authorize.js'
 import { ExportService } from '../src/services/exportService.js'
-import jwt from 'jsonwebtoken'
+import { body, param } from 'express-validator'
+import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set')
-}
-
-// Authentication middleware
-const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-
-  if (!token) {
-    res.status(401).json({ error: 'Access token required' })
-    return
-  }
-
-  jwt.verify(token, JWT_SECRET, (err: unknown, user: unknown) => {
-    if (err) {
-      res.status(403).json({ error: 'Invalid or expired token' })
-      return
-    }
-    (req as any).user = user
-    next()
-  })
-}
 
 router.get('/export', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   const { format = 'json' } = req.query
   const findingRepository = AppDataSource.getRepository(Finding)
 
   const findings = await findingRepository.find({
-    relations: ['program']
+    relations: { program: true }
   })
 
   if (format === 'csv') {
@@ -110,54 +87,80 @@ router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Respon
 }))
 
 // POST create new finding
-router.post('/', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const findingRepository = AppDataSource.getRepository(Finding)
-  const { title, description, severity, type, program_id, technical_details, reproduction_steps, impact, remediation, affected_endpoints } = req.body
+router.post('/', 
+  authenticateToken,
+  [
+    body('title').trim().notEmpty().withMessage('Finding title is required'),
+    body('description').trim().notEmpty().withMessage('Description is required'),
+    body('severity').optional().isIn(['critical', 'high', 'medium', 'low', 'informational']).withMessage('Invalid severity'),
+    body('type').optional().isString().trim(),
+    body('program_id').optional().isUUID().withMessage('Invalid program ID format'),
+    body('technical_details').optional().isString(),
+    body('reproduction_steps').optional().isString(),
+    body('impact').optional().isString(),
+    body('remediation').optional().isString(),
+    body('affected_endpoints').optional().isArray(),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const findingRepository = AppDataSource.getRepository(Finding)
+    const { title, description, severity, type, program_id, technical_details, reproduction_steps, impact, remediation, affected_endpoints } = req.body
 
-  const finding = new Finding()
-  finding.title = title
-  finding.description = description
-  finding.severity = severity || 'medium'
-  finding.type = type || 'other'
-  finding.status = 'submitted'
-  finding.technical_details = technical_details
-  finding.reproduction_steps = reproduction_steps
-  finding.impact = impact
-  finding.remediation = remediation
-  finding.affected_endpoints = affected_endpoints
-  finding.program_id = program_id
-  if (req.user?.id) {
-    finding.researcher_id = req.user.id
-  }
-  finding.submitted_at = new Date()
+    const finding = new Finding()
+    finding.title = title
+    finding.description = description
+    finding.severity = severity || 'medium'
+    finding.type = type || 'other'
+    finding.status = 'submitted'
+    finding.technical_details = technical_details
+    finding.reproduction_steps = reproduction_steps
+    finding.impact = impact
+    finding.remediation = remediation
+    finding.affected_endpoints = affected_endpoints
+    finding.program_id = program_id
+    if (req.user?.id) {
+      finding.researcher_id = req.user.id
+    }
+    finding.submitted_at = new Date()
 
-  const saved = await findingRepository.save(finding)
+    const saved = await findingRepository.save(finding)
 
-  res.status(201).json({
-    success: true,
-    data: saved
+    res.status(201).json({
+      success: true,
+      data: saved
+    })
   })
-}))
+)
 
 // Triage update endpoint - Only Admins and Researchers (users) can triage
-router.patch('/:id/status', authenticateToken, authorize(['admin', 'user']), asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  const { status } = req.body
+router.patch('/:id/status', 
+  authenticateToken, 
+  authorize(['admin', 'user']),
+  [
+    param('id').trim().notEmpty().withMessage('Finding ID is required'),
+    body('status').trim().notEmpty().withMessage('Status is required'),
+    body('status').isIn(['submitted', 'triaged', 'accepted', 'rejected', 'duplicate', 'resolved']).withMessage('Invalid status value'),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const { status } = req.body
 
-  const findingRepository = AppDataSource.getRepository(Finding)
-  const finding = await findingRepository.findOne({ where: { id: id as string } })
+    const findingRepository = AppDataSource.getRepository(Finding)
+    const finding = await findingRepository.findOne({ where: { id: id as string } })
 
-  if (!finding) {
-    res.status(404).json({ success: false, message: 'Finding not found' })
-    return
-  }
+    if (!finding) {
+      res.status(404).json({ success: false, message: 'Finding not found' })
+      return
+    }
 
-  finding.status = status
-  finding.triaged_at = new Date()
+    finding.status = status
+    finding.triaged_at = new Date()
 
-  await findingRepository.save(finding)
+    await findingRepository.save(finding)
 
-  res.json({ success: true, data: finding })
-}))
+    res.json({ success: true, data: finding })
+  })
+)
 
 export const findingsRouter = router

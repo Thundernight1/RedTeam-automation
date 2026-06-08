@@ -1,5 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import axios from 'axios';
+import { body } from 'express-validator';
+import { validate } from '../src/middleware/sharedValidation.js';
 
 const router = Router();
 
@@ -25,39 +27,42 @@ router.get('/health', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Start a new scan/mission
-router.post('/start', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { targets, intensity = 'normal' } = req.body;
+router.post('/start', 
+  [
+    body('targets').isArray({ min: 1 }).withMessage('Targets array with at least one item is required'),
+    body('targets.*').trim().notEmpty().withMessage('Each target must be a non-empty string'),
+    body('intensity').optional().isIn(['low', 'normal', 'high', 'stealth']).withMessage('Invalid intensity value'),
+    validate
+  ],
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { targets, intensity = 'normal' } = req.body;
 
-    if (!targets || !Array.isArray(targets) || targets.length === 0) {
-      res.status(400).json({ error: 'targets array is required' });
-      return;
+      const missionPayload = {
+        mission_name: `Scan-${Date.now()}`,
+        client_name: 'RedTeam-automation',
+        targets,
+        modules: ['web_scanner'],
+        intensity,
+        timeout_minutes: 30
+      };
+
+      const response = await axios.post(
+        `${PYTHON_GATEWAY_URL}/api/v1/missions`,
+        missionPayload,
+        { timeout: 30000 }
+      );
+
+      res.status(201).json(response.data);
+    } catch (error) {
+      console.error('Scan start error:', error);
+      res.status(500).json({
+        error: 'Failed to start scan',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
-
-    const missionPayload = {
-      mission_name: `Scan-${Date.now()}`,
-      client_name: 'RedTeam-automation',
-      targets,
-      modules: ['web_scanner'],
-      intensity,
-      timeout_minutes: 30
-    };
-
-    const response = await axios.post(
-      `${PYTHON_GATEWAY_URL}/api/v1/missions`,
-      missionPayload,
-      { timeout: 30000 }
-    );
-
-    res.status(201).json(response.data);
-  } catch (error) {
-    console.error('Scan start error:', error);
-    res.status(500).json({
-      error: 'Failed to start scan',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
   }
-});
+);
 
 // Get scan/mission status
 router.get('/status/:missionId', async (req: Request, res: Response): Promise<void> => {

@@ -16,6 +16,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
+import { getStatusColor, getLogLevelColor } from '../utils/jobUIHelpers';
 
 interface ReconJob {
   id: string;
@@ -161,34 +162,6 @@ export const Reconnaissance: React.FC = () => {
         }
         : job
     ));
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'running':
-        return 'text-blue-600 bg-blue-100';
-      case 'completed':
-        return 'text-green-600 bg-green-100';
-      case 'failed':
-        return 'text-red-600 bg-red-100';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getLogLevelColor = (level: string) => {
-    switch (level) {
-      case 'info':
-        return 'text-blue-600';
-      case 'warning':
-        return 'text-yellow-600';
-      case 'error':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
   };
 
   return (

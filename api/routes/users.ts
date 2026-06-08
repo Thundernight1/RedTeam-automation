@@ -1,24 +1,10 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { AppDataSource } from '../src/config/data-source.js'
 import { User } from '../src/entities/User.js'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
+import { authenticateToken } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
-
-const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const JWT_SECRET = process.env.JWT_SECRET
-  if (!JWT_SECRET) { res.status(500).json({ error: 'JWT_SECRET not configured' }); return }
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-  if (!token) { res.status(401).json({ error: 'Access token required' }); return }
-  import('jsonwebtoken').then(jwt => {
-    jwt.default.verify(token, JWT_SECRET, (err: unknown, decoded: unknown) => {
-      if (err) { res.status(403).json({ error: 'Invalid or expired token' }); return }
-      req.user = decoded as Request['user']
-      next()
-    })
-  })
-}
 
 // GET all users (admin only in production, simplified here)
 router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Response) => {

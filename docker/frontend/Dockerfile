@@ -12,18 +12,18 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --only=production --legacy-peer-deps && npm cache clean --force
 
 # Development stage
 FROM base AS development
-RUN npm ci && npm cache clean --force
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 COPY . .
 EXPOSE 5173
 CMD ["dumb-init", "npm", "run", "dev"]
 
 # Build stage
 FROM base AS build
-RUN npm ci && npm cache clean --force
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 COPY . .
 RUN npm run build:frontend
 

@@ -33,10 +33,29 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      - PORT=3001
       - DATABASE_URL=postgresql://postgres:postgres@database:5432/redteam_automation
-      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-secret}
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=redteam_automation
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=redteam_automation
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - TYPEORM_SYNCHRONIZE=false
+      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-random-secret-in-production}
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-to-another-random-secret}
+      - JWT_REFRESH_EXPIRES_IN=30d
       - CORS_ORIGIN=http://localhost:80
-      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=changeme
+      - MAX_REQUEST_SIZE=10mb
+      - LOG_LEVEL=info
     depends_on:
       database:
         condition: service_healthy
@@ -78,6 +97,7 @@ services:
   # Redis Cache & Job Queue
   redis:
     image: redis:7-alpine
+    command: redis-server --requirepass changeme
     ports:
       - "6380:6379"
     volumes:

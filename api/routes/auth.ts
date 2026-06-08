@@ -39,7 +39,11 @@ const validateLogin = [
 
 const generateToken = (user: User): string => {
   const payload = { id: user.id, email: user.email, role: user.role }
-  const options: jwt.SignOptions = { expiresIn: JWT_EXPIRES_IN as any }
+  const options: jwt.SignOptions = { 
+    expiresIn: JWT_EXPIRES_IN as any,
+    issuer: 'bugbounty-platform',
+    audience: 'bugbounty-users'
+  }
   return jwt.sign(payload, JWT_SECRET, options)
 }
 
@@ -51,7 +55,10 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
   const token = authHeader.split(' ')[1]
   try {
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      issuer: 'bugbounty-platform',
+      audience: 'bugbounty-users'
+    })
       ; (req as any).user = decoded
     next()
   } catch {
@@ -135,7 +142,7 @@ router.get('/profile', authenticate, async (req: Request, res: Response): Promis
     const userRepository = AppDataSource.getRepository(User)
     const user = await userRepository.findOne({
       where: { id: (req as any).user?.id as string },
-      select: ['id', 'email', 'name', 'role']
+      select: { id: true, email: true, name: true, role: true }
     })
 
     if (!user) {

@@ -5,10 +5,8 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import {
   Send,
-  Download,
   Eye,
   Plus,
-  Settings,
   Filter,
   Edit,
   Trash2,
@@ -18,6 +16,7 @@ import {
   User,
   Tag
 } from 'lucide-react';
+import { JobDetailView } from '../components/shared/JobDetailView';
 
 interface Report {
   id: string;
@@ -496,17 +495,8 @@ export const Reports: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <Button size="sm" variant="outline">
-                        <Download className="h-3 w-3 mr-1" />
-                        Export Report
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Settings className="h-3 w-3 mr-1" />
-                        Configure
-                      </Button>
-                    </div>
+
+                    <JobDetailView showButtons={true} />
                   </div>
                 )}
               </div>

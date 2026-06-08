@@ -1,6 +1,34 @@
-# RedTeam Automation Platform
+# 🚀 RedTeam Automation Platform
 
-> **Red Team & Bug Bounty otomasyon platformu.** Vulnerability management, program tracking, reconnaissance, raporlama — tek bir dashboard'dan.
+> **Enterprise Bug Bounty & Red Team Management System** — Production Ready v1.0.0
+
+### 💼 Commercial License Available | $30,000 One-Time Purchase
+
+[📄 View Sales Page](SALES_PAGE.md) | [📚 Quick Start](QUICKSTART.md) | [📋 Production Certificate](docs/PRODUCTION_CERTIFICATE.md)
+
+---
+
+## 🎯 Executive Summary
+
+**RedTeam Automation Platform** is a full-stack web application for orchestrating red team operations and bug bounty management. Built for enterprise security teams, MSSPs, and professional bug bounty hunters.
+
+**Key Value Proposition:**
+- 💰 **Cost:** $30K one-time vs $50K-100K/year (Bugcrowd, HackerOne)
+- ⚡ **Deployment:** 5 minutes vs 2-4 weeks
+- 🔓 **Control:** Full source code, on-premise deployment
+- 🤖 **AI:** Built-in vulnerability triage (Gemini + Ollama)
+
+---
+
+## ✅ Production Status
+
+| Metric | Status | Details |
+|--------|--------|---------|
+| **Security Hardening** | ✅ Complete | JWT, passwords, rate limiting |
+| **Health Checks** | ✅ All Passing | Database + Redis healthy |
+| **Containers** | ✅ All Healthy | 4 services running |
+| **Documentation** | ✅ Complete | Sales, deployment, user guides |
+| **License** | ✅ Commercial Ready | Single organization license |
 
 ---
 

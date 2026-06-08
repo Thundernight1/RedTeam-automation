@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -17,6 +17,7 @@ import {
   Filter,
   Plus
 } from 'lucide-react';
+import { getStatusColor, getSeverityColor } from '../utils/jobUIHelpers';
 
 interface ScanJob {
   id: string;
@@ -99,27 +100,38 @@ export const Scanning: React.FC = () => {
     }
   ];
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     // Fetch scan jobs from Python gateway via Express bridge
     fetchScanJobs();
     // Poll for updates every 10 seconds
     const interval = setInterval(fetchScanJobs, 10000);
-    return () => clearInterval(interval);
+    return () => {
+      abortControllerRef.current?.abort();
+      clearInterval(interval);
+    };
   }, []);
 
-  const fetchScanJobs = async () => {
+  const fetchScanJobs = useCallback(async () => {
     try {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
       const token = localStorage.getItem('token');
       const response = await axios.get('/api/scan/jobs', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        headers: { Authorization: `Bearer ${token}` },
+        signal: abortControllerRef.current.signal
+      } as any);
       if (response.data) {
         setJobs(response.data as ScanJob[]);
       }
-    } catch (_error) {
-      console.error('Failed to fetch scan jobs:', _error);
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return;
+      }
+      console.error('Failed to fetch scan jobs:', error);
     }
-  };
+  }, []);
 
   const handleStartScan = async () => {
     if (!selectedProfile || !targets) {
@@ -179,38 +191,6 @@ export const Scanning: React.FC = () => {
       } catch (_error) {
         console.error('Failed to stop job:', _error);
       }
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'running':
-        return 'text-blue-600 bg-blue-100';
-      case 'completed':
-        return 'text-green-600 bg-green-100';
-      case 'failed':
-        return 'text-red-600 bg-red-100';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-100 text-red-800';
-      case 'high':
-        return 'bg-orange-100 text-orange-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-blue-100 text-blue-800';
-      case 'info':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 

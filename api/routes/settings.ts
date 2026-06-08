@@ -1,26 +1,13 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { AppDataSource } from '../src/config/data-source.js'
 import { ApiKey } from '../src/entities/ApiKey.js'
 import { User } from '../src/entities/User.js'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
+import { body } from 'express-validator'
+import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
 import crypto from 'crypto'
 
 const router = Router()
-
-const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const JWT_SECRET = process.env.JWT_SECRET
-  if (!JWT_SECRET) { res.status(500).json({ error: 'JWT_SECRET not configured' }); return }
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-  if (!token) { res.status(401).json({ error: 'Access token required' }); return }
-  import('jsonwebtoken').then(jwt => {
-    jwt.default.verify(token, JWT_SECRET, (err: unknown, decoded: unknown) => {
-      if (err) { res.status(403).json({ error: 'Invalid or expired token' }); return }
-      req.user = decoded as Request['user']
-      next()
-    })
-  })
-}
 
 // GET user profile
 router.get('/profile', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
@@ -32,18 +19,27 @@ router.get('/profile', authenticateToken, asyncHandler(async (req: Request, res:
 }))
 
 // PUT update user profile
-router.put('/profile', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const userRepo = AppDataSource.getRepository(User)
-  const user = await userRepo.findOne({ where: { id: req.user?.id } })
-  if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
-  const { name, email, preferences } = req.body
-  if (name) user.name = name
-  if (email) user.email = email
-  if (preferences) user.preferences = preferences
-  const saved = await userRepo.save(user)
-  const { password_hash, ...profile } = saved
-  res.json({ success: true, data: profile })
-}))
+router.put('/profile', 
+  authenticateToken,
+  [
+    body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+    body('email').optional().trim().isEmail().withMessage('Invalid email format'),
+    body('preferences').optional().isObject(),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const userRepo = AppDataSource.getRepository(User)
+    const user = await userRepo.findOne({ where: { id: req.user?.id } })
+    if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
+    const { name, email, preferences } = req.body
+    if (name) user.name = name
+    if (email) user.email = email
+    if (preferences) user.preferences = preferences
+    const saved = await userRepo.save(user)
+    const { password_hash, ...profile } = saved
+    res.json({ success: true, data: profile })
+  })
+)
 
 // GET list API keys
 router.get('/api-keys', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
@@ -66,20 +62,31 @@ router.get('/api-keys', authenticateToken, asyncHandler(async (req: Request, res
 }))
 
 // POST create API key
-router.post('/api-keys', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const { name, key, platform, permissions } = req.body
-  if (!name || !key) { res.status(400).json({ success: false, message: 'Name and key are required' }); return }
-  const keyRepo = AppDataSource.getRepository(ApiKey)
-  const apiKey = new ApiKey()
-  apiKey.user_id = req.user!.id
-  apiKey.name = name
-  apiKey.key_preview = key.slice(0, 8) + '...' + key.slice(-4)
-  apiKey.key_hash = crypto.createHash('sha256').update(key).digest('hex')
-  apiKey.permissions = { platform: platform || 'custom', ...(permissions || {}) }
-  apiKey.is_active = true
-  const saved = await keyRepo.save(apiKey)
-  res.status(201).json({ success: true, data: { id: saved.id, name: saved.name, key: saved.key_preview, status: 'active', createdAt: saved.created_at } })
-}))
+router.post('/api-keys', 
+  authenticateToken,
+  [
+    body('name').trim().notEmpty().withMessage('API key name is required'),
+    body('key').trim().notEmpty().withMessage('API key value is required'),
+    body('key').isLength({ min: 16 }).withMessage('API key must be at least 16 characters'),
+    body('platform').optional().trim(),
+    body('permissions').optional().isObject(),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, key, platform, permissions } = req.body
+    if (!name || !key) { res.status(400).json({ success: false, message: 'Name and key are required' }); return }
+    const keyRepo = AppDataSource.getRepository(ApiKey)
+    const apiKey = new ApiKey()
+    apiKey.user_id = req.user!.id
+    apiKey.name = name
+    apiKey.key_preview = key.slice(0, 8) + '...' + key.slice(-4)
+    apiKey.key_hash = crypto.createHash('sha256').update(key).digest('hex')
+    apiKey.permissions = { platform: platform || 'custom', ...(permissions || {}) }
+    apiKey.is_active = true
+    const saved = await keyRepo.save(apiKey)
+    res.status(201).json({ success: true, data: { id: saved.id, name: saved.name, key: saved.key_preview, status: 'active', createdAt: saved.created_at } })
+  })
+)
 
 // DELETE API key
 router.delete('/api-keys/:id', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
@@ -116,13 +123,25 @@ router.get('/security', authenticateToken, asyncHandler(async (req: Request, res
 }))
 
 // PUT update security settings
-router.put('/security', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const userRepo = AppDataSource.getRepository(User)
-  const user = await userRepo.findOne({ where: { id: req.user?.id } })
-  if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
-  user.preferences = { ...(user.preferences as Record<string, unknown> || {}), security: req.body }
-  await userRepo.save(user)
-  res.json({ success: true, data: req.body })
-}))
+router.put('/security', 
+  authenticateToken,
+  [
+    body('twoFactorEnabled').optional().isBoolean(),
+    body('sessionTimeout').optional().isInt({ min: 5, max: 1440 }),
+    body('maxLoginAttempts').optional().isInt({ min: 1, max: 10 }),
+    body('rateLimiting').optional().isBoolean(),
+    body('dataEncryption').optional().isBoolean(),
+    body('auditLogging').optional().isBoolean(),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const userRepo = AppDataSource.getRepository(User)
+    const user = await userRepo.findOne({ where: { id: req.user?.id } })
+    if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
+    user.preferences = { ...(user.preferences as Record<string, unknown> || {}), security: req.body }
+    await userRepo.save(user)
+    res.json({ success: true, data: req.body })
+  })
+)
 
 export const settingsRouter = router

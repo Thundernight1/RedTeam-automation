@@ -1,6 +1,3 @@
-// import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-// import type { InstrumentationOption } from '@opentelemetry/instrumentation'
-// import { NodeSDK } from '@opentelemetry/sdk-node'
 import compression from 'compression'
 import cors from 'cors'
 import express from 'express'
@@ -11,7 +8,7 @@ import { Server } from 'socket.io'
 
 import { errorHandler, notFound, requestLogger, securityHeaders } from './src/middleware/errorHandler.js'
 import { rateLimiter } from './src/middleware/performance.js'
-import { startMonitoring } from './monitoring/alerts.js'
+import { startMonitoring, getAlerts, getActiveAlerts, clearAlert } from './monitoring/alerts.js'
 
 import { authRouter as authRoutes } from './routes/auth.js'
 import { programsRouter as programRoutes } from './routes/programs.js'
@@ -24,9 +21,6 @@ import { settingsRouter as settingsRoutes } from './routes/settings.js'
 import { reportsRouter as reportsRoutes } from './routes/reports.js'
 import { reconRouter as reconRoutes } from './routes/recon.js'
 import { jobsRouter as jobsRoutes } from './routes/jobs.js'
-import { autonomousService } from './src/services/autonomousService.js'
-
-import { clearAlert, getActiveAlerts, getAlerts } from './monitoring/alerts.js'
 import { healthCheck, readinessCheck } from './monitoring/health.js'
 import { getHealthMetrics, getMetrics } from './monitoring/metrics.js'
 
@@ -119,7 +113,6 @@ app.use(requestLogger)
 app.use(securityHeaders)
 
 if (NODE_ENV === 'production') {
-  //   app.use(productionOptimizations)
   app.use('/api/', rateLimiter)
 }
 
@@ -178,22 +171,6 @@ server.listen(PORT, () => {
 
   if (NODE_ENV === 'production') {
     startMonitoring()
-  }
-  // Initialize optional autonomous orchestrator (Ralph mode)
-  // Usage: node dist/api/server.js --mode ralph
-  // The service will start only when the flag `--mode ralph` is present.
-  const args = process.argv.slice(2)
-  const modeIndex = args.findIndex(arg => arg === '--mode')
-  const isRalphMode = modeIndex !== -1 && args[modeIndex + 1] && args[modeIndex + 1].toLowerCase() === 'ralph'
-
-  if (isRalphMode) {
-    try {
-      autonomousService.start()
-    } catch (error) {
-      logger.warn('Autonomous service failed to start (database may be unavailable):', error)
-    }
-  } else {
-    logger.info('Ralph mode not enabled; autonomous orchestrator will remain idle')
   }
 })
 

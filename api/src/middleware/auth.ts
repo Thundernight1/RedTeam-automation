@@ -105,15 +105,67 @@ export function authenticateApiKey(req: AuthenticatedRequest, res: Response, nex
   const apiKey = req.headers['x-api-key'] as string;
 
   if (!apiKey) {
-    res.status(401).json({ 
+    res.status(401).json({
       error: 'API key required',
       code: 'MISSING_API_KEY'
     });
     return;
   }
 
-  // API key validation will be implemented in the API key service
-  // For now, we'll pass it to the next middleware
-  req.headers['x-api-key-validated'] = 'false';
-  next();
+  // Import AppDataSource dynamically to avoid circular dependencies
+  import('../config/data-source.js').then(async ({ AppDataSource }) => {
+    try {
+      const { ApiKey } = await import('../entities/ApiKey.js');
+      const crypto = await import('crypto');
+      const keyHash = crypto.default.createHash('sha256').update(apiKey).digest('hex');
+      
+      const keyRepo = AppDataSource.getRepository(ApiKey);
+      const foundKey = await keyRepo.findOne({
+        where: { key_hash: keyHash, is_active: true },
+        relations: { user: true }
+      });
+
+      if (!foundKey) {
+        res.status(401).json({
+          error: 'Invalid API key',
+          code: 'INVALID_API_KEY'
+        });
+        return;
+      }
+
+      if (foundKey.isExpired()) {
+        res.status(401).json({
+          error: 'API key expired',
+          code: 'EXPIRED_API_KEY'
+        });
+        return;
+      }
+
+      // Update last_used_at
+      foundKey.last_used_at = new Date();
+      await keyRepo.save(foundKey);
+
+      // Set user context from API key owner
+      req.user = {
+        id: foundKey.user_id,
+        email: foundKey.user.email,
+        role: foundKey.user.role,
+        permissions: [] // Could be extended based on key.permissions
+      };
+
+      next();
+    } catch (error) {
+      console.error('API key authentication error:', error);
+      res.status(500).json({
+        error: 'Authentication service unavailable',
+        code: 'AUTH_SERVICE_ERROR'
+      });
+    }
+  }).catch((error) => {
+    console.error('API key authentication module load error:', error);
+    res.status(500).json({
+      error: 'Authentication service unavailable',
+      code: 'AUTH_SERVICE_ERROR'
+    });
+  });
 }

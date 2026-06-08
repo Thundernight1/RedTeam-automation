@@ -1,25 +1,13 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { AppDataSource } from '../src/config/data-source.js'
 import { Report } from '../src/entities/Report.js'
 import { Finding } from '../src/entities/Finding.js'
+import { In } from 'typeorm'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
+import { body, param } from 'express-validator'
+import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
-
-const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const JWT_SECRET = process.env.JWT_SECRET
-  if (!JWT_SECRET) { res.status(500).json({ error: 'JWT_SECRET not configured' }); return }
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-  if (!token) { res.status(401).json({ error: 'Access token required' }); return }
-  import('jsonwebtoken').then(jwt => {
-    jwt.default.verify(token, JWT_SECRET, (err: unknown, decoded: unknown) => {
-      if (err) { res.status(403).json({ error: 'Invalid or expired token' }); return }
-      req.user = decoded as Request['user']
-      next()
-    })
-  })
-}
 
 // GET all reports
 router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
@@ -62,66 +50,98 @@ router.get('/:id', authenticateToken, asyncHandler(async (req: Request, res: Res
   const reportRepo = AppDataSource.getRepository(Report)
   const report = await reportRepo.findOne({
     where: { id: req.params.id },
-    relations: ['created_by', 'findings']
+    relations: { created_by: true, findings: true }
   })
   if (!report) { res.status(404).json({ success: false, message: 'Report not found' }); return }
   res.json({ success: true, data: report })
 }))
 
 // POST create report
-router.post('/', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const { title, summary, type, executive_summary, methodology, scope, target_info, recommendations, finding_ids } = req.body
-  const reportRepo = AppDataSource.getRepository(Report)
-  const findingRepo = AppDataSource.getRepository(Finding)
-  const report = new Report()
-  report.title = title
-  report.summary = summary
-  report.type = type || 'vulnerability_assessment'
-  report.status = 'draft'
-  report.executive_summary = executive_summary
-  report.methodology = methodology
-  report.scope = scope
-  report.target_info = target_info
-  report.recommendations = recommendations
-  report.created_by_id = req.user!.id
-  if (finding_ids && finding_ids.length > 0) {
-    const findings = await findingRepo.findByIds(finding_ids)
-    report.findings = findings
-    const severityCounts = { critical_count: 0, high_count: 0, medium_count: 0, low_count: 0, informational_count: 0 }
-    findings.forEach(f => {
-      if (f.severity === 'critical') severityCounts.critical_count++
-      else if (f.severity === 'high') severityCounts.high_count++
-      else if (f.severity === 'medium') severityCounts.medium_count++
-      else if (f.severity === 'low') severityCounts.low_count++
-      else severityCounts.informational_count++
-    })
-    const overallRisk = severityCounts.critical_count > 0 ? 'critical' : severityCounts.high_count > 0 ? 'high' : severityCounts.medium_count > 0 ? 'medium' : 'low'
-    report.risk_assessment = { overall_risk: overallRisk, ...severityCounts }
-  }
-  const saved = await reportRepo.save(report)
-  res.status(201).json({ success: true, data: saved })
-}))
+router.post('/', 
+  authenticateToken,
+  [
+    body('title').trim().notEmpty().withMessage('Report title is required'),
+    body('summary').trim().notEmpty().withMessage('Summary is required'),
+    body('type').optional().isIn(['vulnerability_assessment', 'pentest', 'red_team', 'executive']).withMessage('Invalid report type'),
+    body('executive_summary').optional().isString(),
+    body('methodology').optional().isString(),
+    body('scope').optional().isString(),
+    body('target_info').optional().isObject(),
+    body('recommendations').optional().isString(),
+    body('finding_ids').optional().isArray(),
+    body('finding_ids.*').optional().isUUID().withMessage('Each finding ID must be a valid UUID'),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const { title, summary, type, executive_summary, methodology, scope, target_info, recommendations, finding_ids } = req.body
+    const reportRepo = AppDataSource.getRepository(Report)
+    const findingRepo = AppDataSource.getRepository(Finding)
+    const report = new Report()
+    report.title = title
+    report.summary = summary
+    report.type = type || 'vulnerability_assessment'
+    report.status = 'draft'
+    report.executive_summary = executive_summary
+    report.methodology = methodology
+    report.scope = scope
+    report.target_info = target_info
+    report.recommendations = recommendations
+    report.created_by_id = req.user!.id
+    if (finding_ids && finding_ids.length > 0) {
+      const findings = await findingRepo.findBy({ id: In(finding_ids) })
+      report.findings = findings
+      const severityCounts = { critical_count: 0, high_count: 0, medium_count: 0, low_count: 0, informational_count: 0 }
+      findings.forEach((f: Finding) => {
+        if (f.severity === 'critical') severityCounts.critical_count++
+        else if (f.severity === 'high') severityCounts.high_count++
+        else if (f.severity === 'medium') severityCounts.medium_count++
+        else if (f.severity === 'low') severityCounts.low_count++
+        else severityCounts.informational_count++
+      })
+      const overallRisk = severityCounts.critical_count > 0 ? 'critical' : severityCounts.high_count > 0 ? 'high' : severityCounts.medium_count > 0 ? 'medium' : 'low'
+      report.risk_assessment = { overall_risk: overallRisk, ...severityCounts }
+    }
+    const saved = await reportRepo.save(report)
+    res.status(201).json({ success: true, data: saved })
+  })
+)
 
 // PATCH update report status
-router.patch('/:id/status', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const { status } = req.body
-  const reportRepo = AppDataSource.getRepository(Report)
-  const report = await reportRepo.findOne({ where: { id: req.params.id } })
-  if (!report) { res.status(404).json({ success: false, message: 'Report not found' }); return }
-  report.status = status
-  if (status === 'submitted') report.submitted_at = new Date()
-  if (status === 'approved') report.approved_at = new Date()
-  if (status === 'reviewed') report.reviewed_at = new Date()
-  const saved = await reportRepo.save(report)
-  res.json({ success: true, data: saved })
-}))
+router.patch('/:id/status', 
+  authenticateToken,
+  [
+    param('id').trim().notEmpty().withMessage('Report ID is required'),
+    body('status').trim().notEmpty().withMessage('Status is required'),
+    body('status').isIn(['draft', 'submitted', 'approved', 'reviewed', 'archived']).withMessage('Invalid status value'),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const { status } = req.body
+    const reportRepo = AppDataSource.getRepository(Report)
+    const report = await reportRepo.findOne({ where: { id: req.params.id } })
+    if (!report) { res.status(404).json({ success: false, message: 'Report not found' }); return }
+    report.status = status
+    if (status === 'submitted') report.submitted_at = new Date()
+    if (status === 'approved') report.approved_at = new Date()
+    if (status === 'reviewed') report.reviewed_at = new Date()
+    const saved = await reportRepo.save(report)
+    res.json({ success: true, data: saved })
+  })
+)
 
 // DELETE report
-router.delete('/:id', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
-  const reportRepo = AppDataSource.getRepository(Report)
-  const result = await reportRepo.delete(req.params.id)
-  if (result.affected === 0) { res.status(404).json({ success: false, message: 'Report not found' }); return }
-  res.json({ success: true, message: 'Report deleted' })
-}))
+router.delete('/:id', 
+  authenticateToken,
+  [
+    param('id').trim().notEmpty().withMessage('Report ID is required'),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const reportRepo = AppDataSource.getRepository(Report)
+    const result = await reportRepo.delete(req.params.id)
+    if (result.affected === 0) { res.status(404).json({ success: false, message: 'Report not found' }); return }
+    res.json({ success: true, message: 'Report deleted' })
+  })
+)
 
 export const reportsRouter = router

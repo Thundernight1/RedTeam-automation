@@ -1,37 +1,11 @@
-import { Router, type Request, type Response, type NextFunction } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { AppDataSource } from '../src/config/data-source.js'
 import { Program } from '../src/entities/Program.js'
 import { Finding } from '../src/entities/Finding.js'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
-import jwt from 'jsonwebtoken'
+import { authenticateToken } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET
-
-// Authentication middleware
-const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  if (!JWT_SECRET) {
-    res.status(500).json({ error: 'JWT_SECRET not configured' })
-    return
-  }
-
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-
-  if (!token) {
-    res.status(401).json({ error: 'Access token required' })
-    return
-  }
-
-  jwt.verify(token, JWT_SECRET, (err: unknown, decoded: unknown) => {
-    if (err) {
-      res.status(403).json({ error: 'Invalid or expired token' })
-      return
-    }
-    req.user = decoded as Request['user']
-    next()
-  })
-}
 
 router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
   const programRepository = AppDataSource.getRepository(Program)
@@ -45,7 +19,7 @@ router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Respon
 
   // 3. Revenue Estimation
   const findings = await findingRepository.find({
-    select: ['estimated_reward', 'actual_reward', 'severity'] // Added 'severity' for critical findings calculation
+    select: { estimated_reward: true, actual_reward: true, severity: true }
   })
 
   const totalRevenue = findings.reduce((acc: number, current: Pick<Finding, 'actual_reward' | 'estimated_reward'>) => {

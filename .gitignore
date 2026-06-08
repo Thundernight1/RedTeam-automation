@@ -34,6 +34,13 @@ dist-ssr
 # gemini-cli settings
 .gemini/
 
+# Qwen Code settings
+.qwen/
+
+# Database backups
+db_backup_*.sql
+*.sql
+
 # GitHub App credentials
 gha-creds-*.json
 # Temporary cleanup folder
