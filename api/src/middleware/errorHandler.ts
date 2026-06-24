@@ -5,7 +5,8 @@ import { AppError } from '../utils/errors.js'
 export const errorHandler = (
   err: Error,
   req: Request,
-  res: Response
+  res: Response,
+  _next: NextFunction
 ) => {
   let error: AppError
 
@@ -24,6 +25,10 @@ export const errorHandler = (
     userAgent: req.get('user-agent'),
     timestamp: new Date().toISOString(),
   })
+
+  if (err.message === 'Invalid JSON payload') {
+    error = new AppError('Invalid JSON payload', 400)
+  }
 
   if (err.name === 'CastError') {
     error = new AppError('Resource not found', 404)

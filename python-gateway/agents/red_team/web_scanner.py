@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CyberSurhub Red Team Agent - Web Scanner
+ZumrutAutomation Red Team Agent - Web Scanner
 Production-grade web application security scanner
 Version: 2.1.0 (Integrated with System B Logic)
 """
@@ -27,7 +27,7 @@ from urllib3.util.retry import Retry
 # Configure logging
 LOG_FORMAT = '%(asctime)s | %(levelname)-8s | %(name)-25s | %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-logger = logging.getLogger('CyberSurhub.WebScanner')
+logger = logging.getLogger('WebScanner')
 
 
 @dataclass
@@ -184,7 +184,7 @@ class WebScanner:
         session.mount("http://", adapter)
         
         session.headers.update({
-            'User-Agent': 'CyberSurhub Security Scanner/2.1 (Authorized Security Assessment)',
+            'User-Agent': 'ZumrutAutomation Security Scanner/2.1 (Authorized Security Assessment)',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
@@ -574,7 +574,7 @@ class WebScanner:
         # Reuse existing report format logic
         report = []
         report.append("=" * 70)
-        report.append("CyberSurhub Web Security Scan Report")
+        report.append("ZumrutAutomation Web Security Scan Report")
         report.append("=" * 70)
         report.append(f"Target: {self.results.get('target_url')}")
         report.append(f"Score: {self.results.get('risk_score')}")

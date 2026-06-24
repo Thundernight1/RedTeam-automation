@@ -1,5 +1,5 @@
 """
-CyberSurhub Blue Team Validator Agent
+ZumrutAutomation Blue Team Validator Agent
 Validates Red Team findings and performs compliance mapping
 Version: 1.0.0
 Security Level: Production-Ready
@@ -31,7 +31,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('cybersurhub.validator')
+logger = logging.getLogger('validator')
 
 # =============================================================================
 # CONFIGURATION
@@ -46,23 +46,23 @@ class ValidatorConfig:
     # RabbitMQ
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
     RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', 5672))
-    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'cybersurhub')
-    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'changeme')
+    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'platform')
+    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', '')
     
     # Redis
     REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'changeme')
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
     
     # PostgreSQL
     DB_HOST = os.getenv('POSTGRES_HOST', 'postgres')
     DB_PORT = int(os.getenv('POSTGRES_PORT', 5432))
-    DB_NAME = os.getenv('POSTGRES_DB', 'cybersurhub')
-    DB_USER = os.getenv('POSTGRES_USER', 'cybersurhub')
-    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'changeme')
+    DB_NAME = os.getenv('POSTGRES_DB', 'redteam_automation')
+    DB_USER = os.getenv('POSTGRES_USER', 'postgres')
+    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', '')
     
     # Queue names
-    EXCHANGE_NAME = 'cybersurhub_exchange'
+    EXCHANGE_NAME = 'platform_exchange'
     VALIDATOR_QUEUE = 'validator_queue'
     RESULT_QUEUE = 'result_queue'
 
@@ -387,7 +387,7 @@ class FindingValidator:
     
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers['User-Agent'] = 'CyberSurhub/1.0 Validator'
+        self.session.headers['User-Agent'] = 'ZumrutAutomation/1.0 Validator'
         self.session.timeout = 10
     
     def validate_finding(self, finding: Dict) -> ValidationResult:

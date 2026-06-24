@@ -1,5 +1,5 @@
 """
-CyberSurhub Agent Runner
+ZumrutAutomation Agent Runner
 RabbitMQ Consumer Wrapper for Scanner Module Integration
 Version: 1.0.0
 Security Level: Production-Ready
@@ -31,7 +31,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('cybersurhub.agent')
+logger = logging.getLogger('agent')
 
 # =============================================================================
 # CONFIGURATION
@@ -48,23 +48,23 @@ class AgentConfig:
     # RabbitMQ
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
     RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', 5672))
-    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'cybersurhub')
-    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'changeme')
+    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'platform')
+    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', '')
     
     # Redis
     REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'changeme')
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
     
     # PostgreSQL
     DB_HOST = os.getenv('POSTGRES_HOST', 'database')
     DB_PORT = int(os.getenv('POSTGRES_PORT', 5432))
     DB_NAME = os.getenv('POSTGRES_DB', 'redteam_automation')
     DB_USER = os.getenv('POSTGRES_USER', 'postgres')
-    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
+    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', '')
     
     # Queue configuration
-    EXCHANGE_NAME = 'cybersurhub_exchange'
+    EXCHANGE_NAME = 'platform_exchange'
     RESULT_QUEUE = 'result_queue'
     PREFETCH_COUNT = int(os.getenv('PREFETCH_COUNT', 1))
     
@@ -350,7 +350,7 @@ class CacheManager:
 # =============================================================================
 
 class BaseAgent(ABC):
-    """Abstract base class for all CyberSurhub agents."""
+    """Abstract base class for all scanner agents."""
     
     def __init__(self, agent_type: str, queue_name: str, routing_key: str):
         self.agent_id = f"{agent_type}-{AgentConfig.AGENT_ID}"
@@ -733,7 +733,7 @@ class WebScannerAgent(BaseAgent):
         
         try:
             session = requests.Session()
-            session.headers['User-Agent'] = 'CyberSurhub/1.0 Security Scanner'
+            session.headers['User-Agent'] = 'ZumrutAutomation/1.0 Security Scanner'
             
             response = session.head(target, timeout=timeout, allow_redirects=True, verify=True)
             raw_output['status_code'] = response.status_code

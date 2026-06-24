@@ -32,9 +32,9 @@ router.get('/', authenticateToken, asyncHandler(async (req: Request, res: Respon
   res.json({
     success: true,
     data: {
-      programs: totalPrograms,
-      findings: totalFindings,
-      revenue: totalRevenue,
+      totalPrograms,
+      totalFindings,
+      totalRevenue,
       criticalFindings,
       lastUpdated: new Date().toISOString()
     }

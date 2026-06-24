@@ -8,16 +8,16 @@ export class ScopeAgreement {
   @Column({ type: 'varchar' })
   client_name!: string
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'json' })
   authorized_targets!: string
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'json', default: '[]' })
   excluded_targets!: string
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: Date })
   valid_from!: Date
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: Date })
   valid_until!: Date
 
   @Column({ type: 'varchar' })

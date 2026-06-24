@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `api/` directory contains the **Express.js backend** for the RedTeam Automation Platform. It handles authentication, program management, scan orchestration, vulnerability triage, report generation, and real-time communication via Socket.IO. The server integrates with PostgreSQL (via TypeORM), Redis (for caching and job queues), and the Python gateway for offensive tooling.
+The `api/` directory contains the **Express.js backend** for the ZumrutAutomation. It handles authentication, program management, scan orchestration, vulnerability triage, report generation, and real-time communication via Socket.IO. The server integrates with PostgreSQL (via TypeORM), Redis (for caching and job queues), and the Python gateway for offensive tooling.
 
 ## Technology Stack
 

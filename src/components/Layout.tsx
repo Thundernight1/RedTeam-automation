@@ -45,7 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
           <div className="flex items-center">
             <Shield className="h-8 w-8 text-blue-500" />
-            <span className="ml-3 text-xl font-bold text-white">RedTeam Automation</span>
+            <span className="ml-3 text-xl font-bold text-white">ZumrutAutomation</span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

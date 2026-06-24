@@ -41,13 +41,13 @@ export const platformConfig = {
 
   // ── Stripe Billing ──────────────────────────────────────────
   stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    secretKey: process.env.STRIPE_SECRET_KEY || '',  // Not used unless billing enabled
     publicKey: process.env.STRIPE_PUBLIC_KEY || '',
   },
 
   // ── Logging ─────────────────────────────────────────────────
   logLevel: process.env.LOG_LEVEL || 'info',
-  logFile: process.env.LOG_FILE || './logs/redteam-automation.log',
+  logFile: process.env.LOG_FILE || './logs/platform.log',
 } as const;
 
 export default platformConfig;

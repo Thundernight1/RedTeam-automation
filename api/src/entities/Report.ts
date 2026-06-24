@@ -30,13 +30,13 @@ export class Report {
   @Column({ type: 'text', nullable: true })
   scope!: string
 
-  @Column({ type: 'enum', enum: ['draft', 'submitted', 'reviewed', 'approved', 'rejected'], default: 'draft' })
+  @Column({ type: 'varchar', enum: ['draft', 'submitted', 'reviewed', 'approved', 'rejected'], default: 'draft' })
   status!: ReportStatus
 
-  @Column({ type: 'enum', enum: ['vulnerability_assessment', 'penetration_test', 'security_audit', 'compliance_check'] })
+  @Column({ type: 'varchar', enum: ['vulnerability_assessment', 'penetration_test', 'security_audit', 'compliance_check'] })
   type!: ReportType
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   target_info!: {
     name: string
     url: string
@@ -44,7 +44,7 @@ export class Report {
     description: string
   }
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   risk_assessment!: {
     overall_risk: 'critical' | 'high' | 'medium' | 'low'
     critical_count: number
@@ -54,23 +54,23 @@ export class Report {
     informational_count: number
   }
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   recommendations!: {
     immediate: string[]
     short_term: string[]
     long_term: string[]
   }
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata!: Record<string, unknown>
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   submitted_at!: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   reviewed_at!: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   approved_at!: Date
 
   @CreateDateColumn({ name: 'created_at' })
@@ -79,7 +79,7 @@ export class Report {
   @UpdateDateColumn({ name: 'updated_at' })
   updated_at!: Date
 
-  @Column({ name: 'created_by_id', type: 'uuid', nullable: true })
+  @Column({ name: 'created_by_id', type: 'varchar', nullable: true })
   created_by_id!: string
 
   @ManyToOne(() => User, user => user.reports)

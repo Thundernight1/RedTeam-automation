@@ -39,7 +39,7 @@ const logger = winston.createLogger({
   level: logLevel,
   format: logFormat,
   defaultMeta: {
-    service: 'redteam-automation',
+    service: 'ZumrutAutomation',
     environment: environment,
     timestamp: new Date().toISOString(),
   },

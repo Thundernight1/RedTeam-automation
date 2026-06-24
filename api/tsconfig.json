@@ -14,7 +14,9 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "strictPropertyInitialization": false,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "./start.ts",
@@ -25,6 +27,7 @@
     "./routes/**/*.ts",
     "./utils/**/*.ts",
     "./types/**/*.ts",
+    "./types/**/*.d.ts",
     "./src/config/**/*.ts",
     "./src/entities/**/*.ts",
     "./src/services/**/*.ts",

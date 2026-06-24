@@ -22,10 +22,10 @@ export class User {
   @Column({ type: 'varchar' })
   name!: string
 
-  @Column({ type: 'enum', enum: ['admin', 'user', 'viewer'], default: 'user' })
+  @Column({ type: 'varchar', enum: ['admin', 'user', 'viewer'], default: 'user' })
   role!: 'admin' | 'user' | 'viewer'
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'json', default: {} })
   preferences!: Record<string, unknown>
 
   @CreateDateColumn()
@@ -60,7 +60,7 @@ export class User {
   // Get public profile (exclude sensitive data)
   getPublicProfile() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...publicProfile } = this
+    const { password_hash, preferences, programs, findings, reports, ...publicProfile } = this
     return publicProfile
   }
 }

@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken';
+import type { StringValue } from 'ms';
 import bcrypt from 'bcryptjs';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || ''
 const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || ''
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '15m') as unknown as number
-const JWT_REFRESH_EXPIRES_IN = (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as unknown as number
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '15m') as StringValue
+const JWT_REFRESH_EXPIRES_IN = (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as StringValue
 const BCRYPT_ROUNDS: number = parseInt(process.env.BCRYPT_ROUNDS || '12')
 
 export interface JWTPayload {
@@ -23,8 +24,8 @@ export interface RefreshTokenPayload {
 export function generateAccessToken(payload: JWTPayload): string {
   const options: jwt.SignOptions = {
     expiresIn: JWT_EXPIRES_IN,
-    issuer: 'bugbounty-platform',
-    audience: 'bugbounty-users'
+    issuer: 'ZumrutAutomation-platform',
+    audience: 'ZumrutAutomation-users'
   }
   return jwt.sign(payload, JWT_SECRET, options);
 }
@@ -33,8 +34,8 @@ export function generateAccessToken(payload: JWTPayload): string {
 export function generateRefreshToken(payload: RefreshTokenPayload): string {
   const options: jwt.SignOptions = {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
-    issuer: 'bugbounty-platform',
-    audience: 'bugbounty-users'
+    issuer: 'ZumrutAutomation-platform',
+    audience: 'ZumrutAutomation-users'
   }
   return jwt.sign(payload, JWT_REFRESH_SECRET, options);
 }
@@ -43,8 +44,8 @@ export function generateRefreshToken(payload: RefreshTokenPayload): string {
 export function verifyAccessToken(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET, {
-      issuer: 'bugbounty-platform',
-      audience: 'bugbounty-users'
+      issuer: 'ZumrutAutomation-platform',
+      audience: 'ZumrutAutomation-users'
     }) as JWTPayload;
   } catch (error) {
     console.error('JWT verification failed:', error);
@@ -56,8 +57,8 @@ export function verifyAccessToken(token: string): JWTPayload | null {
 export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
   try {
     return jwt.verify(token, JWT_REFRESH_SECRET, {
-      issuer: 'bugbounty-platform',
-      audience: 'bugbounty-users'
+      issuer: 'ZumrutAutomation-platform',
+      audience: 'ZumrutAutomation-users'
     }) as RefreshTokenPayload;
   } catch (error) {
     console.error('Refresh token verification failed:', error);

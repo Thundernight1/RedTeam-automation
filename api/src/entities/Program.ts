@@ -27,32 +27,32 @@ export class Program {
   @Column({ type: 'varchar' })
   program_id: string // External platform ID
 
-  @Column({ type: 'enum', enum: ['active', 'paused', 'completed', 'draft'], default: 'active' })
+  @Column({ type: 'varchar', enum: ['active', 'paused', 'completed', 'draft'], default: 'active' })
   status: ProgramStatus
 
-  @Column({ type: 'enum', enum: ['public', 'private', 'invite_only'], default: 'public' })
+  @Column({ type: 'varchar', enum: ['public', 'private', 'invite_only'], default: 'public' })
   type: ProgramType
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   scopes: {
     in_scope: string[]
     out_of_scope: string[]
   } | null
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   rewards: {
     min: number
     max: number
     currency: string
   } | null
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata: Record<string, unknown> | null
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   start_date: Date | null
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   end_date: Date | null
 
   @CreateDateColumn()
@@ -61,7 +61,7 @@ export class Program {
   @UpdateDateColumn()
   updated_at: Date
 
-  @Column({ name: 'created_by_id', type: 'uuid', nullable: true })
+  @Column({ name: 'created_by_id', type: 'varchar', nullable: true })
   created_by_id: string
 
   @ManyToOne(() => User, user => user.programs)

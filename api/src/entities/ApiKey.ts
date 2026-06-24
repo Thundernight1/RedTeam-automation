@@ -11,7 +11,7 @@ export class ApiKey {
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'varchar' })
   user_id!: string
 
   @Column({ type: 'varchar' })
@@ -23,16 +23,16 @@ export class ApiKey {
   @Column({ type: 'text' })
   key_hash!: string
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   permissions!: Record<string, boolean>
 
   @Column({ type: 'boolean', default: true })
   is_active!: boolean
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   last_used_at!: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   expires_at!: Date
 
   @CreateDateColumn()

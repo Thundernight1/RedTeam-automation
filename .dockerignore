@@ -1,0 +1,33 @@
+# Build artifacts
+node_modules
+dist
+*.log
+logs
+
+# Development
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+.nyc_output
+
+# Temporary
+tmp
+temp
+*.tmp

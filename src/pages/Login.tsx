@@ -49,7 +49,7 @@ export const Login: React.FC = () => {
           <div className="flex justify-center mb-4">
             <Shield className="h-16 w-16 text-blue-500" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">RedTeam Automation</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">ZumrutAutomation</h1>
           <p className="text-gray-300">Professional Bug Bounty Platform</p>
         </div>
 

@@ -5,7 +5,7 @@ import { Finding } from '../src/entities/Finding.js'
 import { In } from 'typeorm'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
 import { body, param } from 'express-validator'
-import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
+import { validate, authenticateToken, AuthenticatedRequest } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
 
@@ -72,7 +72,7 @@ router.post('/',
     body('finding_ids.*').optional().isUUID().withMessage('Each finding ID must be a valid UUID'),
     validate
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { title, summary, type, executive_summary, methodology, scope, target_info, recommendations, finding_ids } = req.body
     const reportRepo = AppDataSource.getRepository(Report)
     const findingRepo = AppDataSource.getRepository(Finding)

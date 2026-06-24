@@ -1,5 +1,5 @@
 """
-CyberSurhub API Gateway
+ZumrutAutomation API Gateway
 Enterprise REST API for Mission Control and Orchestration
 Version: 1.0.0
 Security Level: Production-Ready
@@ -33,7 +33,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('cybersurhub.gateway')
+logger = logging.getLogger('gateway')
 
 # =============================================================================
 # CONFIGURATION
@@ -47,21 +47,21 @@ class Config:
     DB_PORT = int(os.getenv('POSTGRES_PORT', 5432))
     DB_NAME = os.getenv('POSTGRES_DB', 'redteam_automation')
     DB_USER = os.getenv('POSTGRES_USER', 'postgres')
-    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
+    DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', '')
     
     # Redis
     REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'changeme')
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
     
     # RabbitMQ
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
     RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', 5672))
-    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'cybersurhub')
-    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'changeme')
+    RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'platform')
+    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', '')
     
     # JWT
-    JWT_SECRET = os.getenv('JWT_SECRET', 'cybersurhub-secret-key-change-in-production')
+    JWT_SECRET = os.getenv('JWT_SECRET', '')
     JWT_ALGORITHM = 'HS256'
     JWT_EXPIRATION_HOURS = 24
     
@@ -315,7 +315,7 @@ class MessageBroker:
             
             # Declare exchange
             self._channel.exchange_declare(
-                exchange='cybersurhub_exchange',
+                exchange='platform_exchange',
                 exchange_type='topic',
                 durable=True
             )
@@ -328,7 +328,7 @@ class MessageBroker:
             _, channel = self._get_connection()
             
             channel.basic_publish(
-                exchange='cybersurhub_exchange',
+                exchange='platform_exchange',
                 routing_key=routing_key,
                 body=json.dumps(message),
                 properties=pika.BasicProperties(
@@ -420,7 +420,7 @@ def validate_target(target: str) -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    logger.info("CyberSurhub API Gateway starting...")
+    logger.info("ZumrutAutomation API Gateway starting...")
     
     # Initialize services
     app.state.db = DatabaseManager()
@@ -436,7 +436,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="CyberSurhub API Gateway",
+    title="ZumrutAutomation API Gateway",
     description="Enterprise Penetration Testing Orchestration Framework",
     version="1.0.0",
     lifespan=lifespan
@@ -1268,7 +1268,7 @@ async def prometheus_metrics(request: Request):
             "SELECT status, COUNT(*) as count FROM missions GROUP BY status"
         )
         for row in status_counts:
-            metrics.append(f'cybersurhub_missions_total{{status="{row["status"]}"}} {row["count"]}')
+            metrics.append(f'platform_missions_total{{status="{row["status"]}"}} {row["count"]}')
     except Exception:
         pass
     
@@ -1278,7 +1278,7 @@ async def prometheus_metrics(request: Request):
             "SELECT severity, COUNT(*) as count FROM findings GROUP BY severity"
         )
         for row in severity_counts:
-            metrics.append(f'cybersurhub_findings_total{{severity="{row["severity"]}"}} {row["count"]}')
+            metrics.append(f'platform_findings_total{{severity="{row["severity"]}"}} {row["count"]}')
     except Exception:
         pass
     
@@ -1291,7 +1291,7 @@ async def prometheus_metrics(request: Request):
             """
         )
         if agent_count:
-            metrics.append(f'cybersurhub_agents_active {agent_count[0]["count"]}')
+            metrics.append(f'platform_agents_active {agent_count[0]["count"]}')
     except Exception:
         pass
     

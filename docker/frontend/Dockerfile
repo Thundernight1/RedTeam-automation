@@ -11,19 +11,19 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production --legacy-peer-deps && npm cache clean --force
+# Install dependencies (exclude native test-only modules from frontend image)
+RUN npm pkg delete devDependencies.better-sqlite3 &&     npm install --legacy-peer-deps && npm cache clean --force
 
 # Development stage
 FROM base AS development
-RUN npm ci --legacy-peer-deps && npm cache clean --force
+RUN npm pkg delete devDependencies.better-sqlite3 &&     npm install --legacy-peer-deps && npm cache clean --force
 COPY . .
 EXPOSE 5173
 CMD ["dumb-init", "npm", "run", "dev"]
 
 # Build stage
 FROM base AS build
-RUN npm ci --legacy-peer-deps && npm cache clean --force
+RUN npm pkg delete devDependencies.better-sqlite3 &&     npm install --legacy-peer-deps && npm cache clean --force
 COPY . .
 RUN npm run build:frontend
 

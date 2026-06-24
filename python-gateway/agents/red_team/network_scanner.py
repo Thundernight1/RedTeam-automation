@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CyberSurhub Red Team Agent - Network Scanner
+ZumrutAutomation Red Team Agent - Network Scanner
 Production-grade port scanner for security assessment
 Version: 2.0.0
 """
@@ -21,7 +21,7 @@ from dataclasses import dataclass, field, asdict
 # Configure logging
 LOG_FORMAT = '%(asctime)s | %(levelname)-8s | %(name)-25s | %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-logger = logging.getLogger('CyberSurhub.NetworkScanner')
+logger = logging.getLogger('NetworkScanner')
 
 
 @dataclass
@@ -487,7 +487,7 @@ class NetworkScanner:
         """Format results as human-readable text report."""
         report = []
         report.append("=" * 70)
-        report.append("CyberSurhub Network Port Scan Report")
+        report.append("ZumrutAutomation Network Port Scan Report")
         report.append("=" * 70)
         report.append(f"Scan ID: {self.results.get('scan_id', 'N/A')}")
         report.append(f"Target IP: {self.results.get('target_ip', 'N/A')}")

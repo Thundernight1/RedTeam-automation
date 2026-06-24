@@ -4,18 +4,17 @@ import { ApiKey } from '../src/entities/ApiKey.js'
 import { User } from '../src/entities/User.js'
 import { asyncHandler } from '../src/middleware/errorHandler.js'
 import { body } from 'express-validator'
-import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
+import { validate, authenticateToken, AuthenticatedRequest } from '../src/middleware/sharedValidation.js'
 import crypto from 'crypto'
 
 const router = Router()
 
 // GET user profile
-router.get('/profile', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+router.get('/profile', authenticateToken, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userRepo = AppDataSource.getRepository(User)
   const user = await userRepo.findOne({ where: { id: req.user?.id } })
   if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
-  const { password_hash, ...profile } = user
-  res.json({ success: true, data: profile })
+  res.json({ success: true, data: user.getPublicProfile() })
 }))
 
 // PUT update user profile
@@ -27,7 +26,7 @@ router.put('/profile',
     body('preferences').optional().isObject(),
     validate
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userRepo = AppDataSource.getRepository(User)
     const user = await userRepo.findOne({ where: { id: req.user?.id } })
     if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
@@ -36,13 +35,12 @@ router.put('/profile',
     if (email) user.email = email
     if (preferences) user.preferences = preferences
     const saved = await userRepo.save(user)
-    const { password_hash, ...profile } = saved
-    res.json({ success: true, data: profile })
+    res.json({ success: true, data: saved.getPublicProfile() })
   })
 )
 
 // GET list API keys
-router.get('/api-keys', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+router.get('/api-keys', authenticateToken, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const keyRepo = AppDataSource.getRepository(ApiKey)
   const keys = await keyRepo.find({
     where: { user_id: req.user?.id },
@@ -52,7 +50,7 @@ router.get('/api-keys', authenticateToken, asyncHandler(async (req: Request, res
     id: k.id,
     name: k.name,
     platform: k.permissions?.platform || 'custom',
-    key: k.key_preview,
+    preview: k.key_preview,
     status: k.is_active && !k.isExpired() ? 'active' : (k.isExpired() ? 'expired' : 'inactive'),
     createdAt: k.created_at,
     lastUsed: k.last_used_at,
@@ -72,7 +70,7 @@ router.post('/api-keys',
     body('permissions').optional().isObject(),
     validate
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { name, key, platform, permissions } = req.body
     if (!name || !key) { res.status(400).json({ success: false, message: 'Name and key are required' }); return }
     const keyRepo = AppDataSource.getRepository(ApiKey)
@@ -84,12 +82,12 @@ router.post('/api-keys',
     apiKey.permissions = { platform: platform || 'custom', ...(permissions || {}) }
     apiKey.is_active = true
     const saved = await keyRepo.save(apiKey)
-    res.status(201).json({ success: true, data: { id: saved.id, name: saved.name, key: saved.key_preview, status: 'active', createdAt: saved.created_at } })
+    res.status(201).json({ success: true, data: { id: saved.id, name: saved.name, preview: saved.key_preview, status: 'active', createdAt: saved.created_at } })
   })
 )
 
 // DELETE API key
-router.delete('/api-keys/:id', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+router.delete('/api-keys/:id', authenticateToken, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const keyRepo = AppDataSource.getRepository(ApiKey)
   const result = await keyRepo.delete({ id: req.params.id, user_id: req.user?.id })
   if (result.affected === 0) { res.status(404).json({ success: false, message: 'API key not found' }); return }
@@ -97,7 +95,7 @@ router.delete('/api-keys/:id', authenticateToken, asyncHandler(async (req: Reque
 }))
 
 // PATCH toggle API key
-router.patch('/api-keys/:id', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+router.patch('/api-keys/:id', authenticateToken, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const keyRepo = AppDataSource.getRepository(ApiKey)
   const key = await keyRepo.findOne({ where: { id: req.params.id, user_id: req.user?.id } })
   if (!key) { res.status(404).json({ success: false, message: 'API key not found' }); return }
@@ -107,7 +105,7 @@ router.patch('/api-keys/:id', authenticateToken, asyncHandler(async (req: Reques
 }))
 
 // GET security settings (stored in user preferences)
-router.get('/security', authenticateToken, asyncHandler(async (req: Request, res: Response) => {
+router.get('/security', authenticateToken, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userRepo = AppDataSource.getRepository(User)
   const user = await userRepo.findOne({ where: { id: req.user?.id } })
   if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }
@@ -134,7 +132,7 @@ router.put('/security',
     body('auditLogging').optional().isBoolean(),
     validate
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userRepo = AppDataSource.getRepository(User)
     const user = await userRepo.findOne({ where: { id: req.user?.id } })
     if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return }

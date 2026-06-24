@@ -5,7 +5,7 @@ import { asyncHandler } from '../src/middleware/errorHandler.js'
 import { authorize } from '../src/middleware/authorize.js'
 import { ExportService } from '../src/services/exportService.js'
 import { body, param } from 'express-validator'
-import { validate, authenticateToken } from '../src/middleware/sharedValidation.js'
+import { validate, authenticateToken, AuthenticatedRequest } from '../src/middleware/sharedValidation.js'
 
 const router = Router()
 
@@ -102,7 +102,7 @@ router.post('/',
     body('affected_endpoints').optional().isArray(),
     validate
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const findingRepository = AppDataSource.getRepository(Finding)
     const { title, description, severity, type, program_id, technical_details, reproduction_steps, impact, remediation, affected_endpoints } = req.body
 
@@ -139,7 +139,7 @@ router.patch('/:id/status',
   [
     param('id').trim().notEmpty().withMessage('Finding ID is required'),
     body('status').trim().notEmpty().withMessage('Status is required'),
-    body('status').isIn(['submitted', 'triaged', 'accepted', 'rejected', 'duplicate', 'resolved']).withMessage('Invalid status value'),
+    body('status').isIn(['submitted', 'triaged', 'resolved', 'duplicate', 'not_applicable', 'spam']).withMessage('Invalid status value'),
     validate
   ],
   asyncHandler(async (req: Request, res: Response) => {
@@ -160,6 +160,27 @@ router.patch('/:id/status',
     await findingRepository.save(finding)
 
     res.json({ success: true, data: finding })
+  })
+)
+
+// DELETE finding - Admin or owner
+router.delete('/:id',
+  authenticateToken,
+  [
+    param('id').trim().notEmpty().withMessage('Finding ID is required'),
+    validate
+  ],
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const findingRepository = AppDataSource.getRepository(Finding)
+    const result = await findingRepository.delete(id)
+
+    if (result.affected === 0) {
+      res.status(404).json({ success: false, message: 'Finding not found' })
+      return
+    }
+
+    res.json({ success: true, message: 'Finding deleted' })
   })
 )
 

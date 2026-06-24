@@ -27,8 +27,6 @@ import { getHealthMetrics, getMetrics } from './monitoring/metrics.js'
 import logger from './src/utils/logger.js'
 import { initializeDatabase } from './src/config/data-source.js'
 
-initializeDatabase()
-
 const app = express()
 const server = createServer(app)
 
@@ -36,7 +34,6 @@ const corsOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://redteam-automation.vercel.app',
   corsOrigin
 ].filter(Boolean)
 
@@ -77,8 +74,8 @@ app.use(helmet({
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // In development, allow all origins
-    if (NODE_ENV === 'development' || !origin || allowedOrigins.includes(origin)) {
+    // In development or test, allow all origins
+    if (NODE_ENV === 'development' || NODE_ENV === 'test' || !origin || allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
@@ -160,19 +157,26 @@ io.on('connection', (socket) => {
 //   }),
 //   instrumentations: getNodeAutoInstrumentations(),
 // })
-// 
+//
 // if (process.env.OTEL_ENABLED === 'true') {
 //   sdk.start()
 //   logger.info('OpenTelemetry SDK started')
 // }
-// 
-server.listen(PORT, () => {
-  logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`)
+//
+export const startServer = async () => {
+  await initializeDatabase()
+  server.listen(PORT, () => {
+    logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`)
 
-  if (NODE_ENV === 'production') {
-    startMonitoring()
-  }
-})
+    if (NODE_ENV === 'production') {
+      startMonitoring()
+    }
+  })
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  startServer()
+}
 
 server.on('error', (error: Error) => {
   logger.error('Server error:', error)

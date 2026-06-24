@@ -1,5 +1,5 @@
 """
-Worker entry point for CyberSurhub scanner agents.
+Worker entry point for ZumrutAutomation scanner agents.
 Reads WORKER_TYPE from environment and starts the appropriate agent.
 """
 
@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('cybersurhub.worker')
+logger = logging.getLogger('worker')
 
 # Add agent modules to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

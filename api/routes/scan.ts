@@ -8,7 +8,7 @@ const router = Router();
 const PYTHON_GATEWAY_URL = process.env.PYTHON_GATEWAY_URL || 'http://python-gateway:8080';
 
 /**
- * Proxy routes to Python Scanning Gateway (CyberSurhub)
+ * Proxy routes to Python Scanning Gateway
  * All /api/scan/* routes are forwarded to the Python backend
  */
 
@@ -40,7 +40,7 @@ router.post('/start',
 
       const missionPayload = {
         mission_name: `Scan-${Date.now()}`,
-        client_name: 'RedTeam-automation',
+        client_name: 'ZumrutAutomation',
         targets,
         modules: ['web_scanner'],
         intensity,

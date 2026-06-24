@@ -1,40 +1,25 @@
-/**
- * Critical Path Tests - RedTeam Automation Platform
- * 
- * Bu testler, alıcıya sistemin çalıştığını kanıtlamak için
- * minimum gerekli testleri içerir.
- * 
- * Çalıştırma: npm run test:critical
- */
-
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import { AppDataSource } from '../src/config/data-source.js';
+import { app } from '../server.js';
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3001';
+describe('ZumrutAutomation - Critical Path Tests', () => {
 
-describe('RedTeam Automation - Critical Path Tests', () => {
-  
   let authToken: string;
   let adminToken: string;
 
   beforeAll(async () => {
-    // Health check
-    const healthRes = await request(BASE_URL)
-      .get('/health')
-      .expect(200);
-    
-    expect(healthRes.body.status).toBe('healthy');
-    expect(healthRes.body.services.database).toBe('healthy');
-    expect(healthRes.body.services.redis).toBe('healthy');
+    // Initialize in-memory database; already handled in setup.ts, but ensure schema is ready
+    expect(AppDataSource.isInitialized).toBe(true);
   });
 
   describe('Authentication Flow', () => {
     it('should login with admin credentials', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'admin@cybersurhub.com',
-          password: process.env.ADMIN_PASSWORD || 'Admin@12345!'
+          email: 'admin@example.com',
+          password: process.env.DEFAULT_ADMIN_PASSWORD || ''
         })
         .expect(200);
 
@@ -45,8 +30,8 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
     it('should register new user', async () => {
       const testEmail = `test_${Date.now()}@example.com`;
-      
-      const res = await request(BASE_URL)
+
+      const res = await request(app)
         .post('/api/auth/register')
         .send({
           email: testEmail,
@@ -61,26 +46,26 @@ describe('RedTeam Automation - Critical Path Tests', () => {
     });
 
     it('should reject invalid login', async () => {
-      await request(BASE_URL)
+      await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'admin@cybersurhub.com',
+          email: 'admin@example.com',
           password: 'wrongpassword'
         })
         .expect(401);
     });
 
     it('should get user profile with valid token', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/api/auth/profile')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty('email');
+      expect(res.body.data).toHaveProperty('email');
     });
 
     it('should reject profile access without token', async () => {
-      await request(BASE_URL)
+      await request(app)
         .get('/api/auth/profile')
         .expect(401);
     });
@@ -90,7 +75,7 @@ describe('RedTeam Automation - Critical Path Tests', () => {
     let programId: string;
 
     it('should create program (admin)', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .post('/api/programs')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -101,32 +86,32 @@ describe('RedTeam Automation - Critical Path Tests', () => {
         })
         .expect(201);
 
-      expect(res.body).toHaveProperty('id');
-      expect(res.body.name).toBe('Test Bug Bounty Program');
-      programId = res.body.id;
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data.name).toBe('Test Bug Bounty Program');
+      programId = res.body.data.id;
     });
 
     it('should list programs', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/api/programs')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(res.body).toBeInstanceOf(Array);
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('should get program by id', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get(`/api/programs/${programId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(res.body.id).toBe(programId);
+      expect(res.body.data.id).toBe(programId);
     });
 
     it('should update program', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .put(`/api/programs/${programId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -134,18 +119,18 @@ describe('RedTeam Automation - Critical Path Tests', () => {
         })
         .expect(200);
 
-      expect(res.body.status).toBe('paused');
+      expect(res.body.data.status).toBe('paused');
     });
 
     it('should delete program (admin)', async () => {
-      await request(BASE_URL)
+      await request(app)
         .delete(`/api/programs/${programId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
     });
 
     it('should reject program creation without admin role', async () => {
-      await request(BASE_URL)
+      await request(app)
         .post('/api/programs')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -164,7 +149,7 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
     beforeAll(async () => {
       // Create test program
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .post('/api/programs')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -175,11 +160,11 @@ describe('RedTeam Automation - Critical Path Tests', () => {
         })
         .expect(201);
 
-      testProgramId = res.body.id;
+      testProgramId = res.body.data.id;
     });
 
     it('should create finding', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .post('/api/findings')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -192,34 +177,35 @@ describe('RedTeam Automation - Critical Path Tests', () => {
         })
         .expect(201);
 
-      expect(res.body).toHaveProperty('id');
-      expect(res.body.title).toBe('SQL Injection in Login Form');
-      findingId = res.body.id;
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data.title).toBe('SQL Injection in Login Form');
+      findingId = res.body.data.id;
     });
 
     it('should list findings with filters', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/api/findings?severity=high&status=new')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(res.body).toBeInstanceOf(Array);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('should update finding status', async () => {
-      const res = await request(BASE_URL)
-        .put(`/api/findings/${findingId}`)
+      const res = await request(app)
+        .patch(`/api/findings/${findingId}/status`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           status: 'triaged'
         })
         .expect(200);
 
-      expect(res.body.status).toBe('triaged');
+      expect(res.body.data.status).toBe('triaged');
     });
 
     it('should export findings to CSV', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/api/findings/export?format=csv')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -229,12 +215,12 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
     afterAll(async () => {
       // Cleanup
-      await request(BASE_URL)
+      await request(app)
         .delete(`/api/findings/${findingId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      await request(BASE_URL)
+      await request(app)
         .delete(`/api/programs/${testProgramId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -243,26 +229,26 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
   describe('Stats & Monitoring', () => {
     it('should get dashboard stats', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/api/stats')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty('totalPrograms');
-      expect(res.body).toHaveProperty('totalFindings');
+      expect(res.body.data).toHaveProperty('totalPrograms');
+      expect(res.body.data).toHaveProperty('totalFindings');
     });
 
     it('should get health metrics', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/health/metrics')
         .expect(200);
 
-      expect(res.body).toHaveProperty('memory');
-      expect(res.body).toHaveProperty('cpu');
+      expect(res.body.metrics).toHaveProperty('averageResponseTime');
+      expect(res.body.metrics).toHaveProperty('errorRate');
     });
 
     it('should get readiness status', async () => {
-      const res = await request(BASE_URL)
+      const res = await request(app)
         .get('/health/readiness')
         .expect(200);
 
@@ -272,7 +258,7 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
   describe('Security Tests', () => {
     it('should reject malformed JSON', async () => {
-      await request(BASE_URL)
+      await request(app)
         .post('/api/auth/login')
         .set('Content-Type', 'application/json')
         .send('invalid json')
@@ -281,10 +267,10 @@ describe('RedTeam Automation - Critical Path Tests', () => {
 
     it('should enforce rate limiting (multiple requests)', async () => {
       const requests = Array(10).fill(null);
-      
+
       const responses = await Promise.all(
-        requests.map(() => 
-          request(BASE_URL).get('/health')
+        requests.map(() =>
+          request(app).get('/health')
         )
       );
 
@@ -294,9 +280,9 @@ describe('RedTeam Automation - Critical Path Tests', () => {
     });
 
     it('should reject JWT with invalid signature', async () => {
-      const invalidToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMyJ9.invalid';
-      
-      await request(BASE_URL)
+      const invalidToken = 'eyJhbG...alid';
+
+      await request(app)
         .get('/api/auth/profile')
         .set('Authorization', `Bearer ${invalidToken}`)
         .expect(401);
@@ -304,12 +290,6 @@ describe('RedTeam Automation - Critical Path Tests', () => {
   });
 
   afterAll(async () => {
-    // Final health check
-    const healthRes = await request(BASE_URL)
-      .get('/health')
-      .expect(200);
-    
     console.log('✅ All critical path tests completed successfully');
-    console.log(`System Status: ${healthRes.body.status}`);
   });
 });

@@ -36,25 +36,25 @@ export class Finding {
   @Column({ type: 'text', nullable: true })
   remediation: string
 
-  @Column({ type: 'enum', enum: ['critical', 'high', 'medium', 'low', 'informational'] })
+  @Column({ type: 'varchar', enum: ['critical', 'high', 'medium', 'low', 'informational'] })
   severity: Severity
 
-  @Column({ type: 'enum', enum: ['xss', 'sql_injection', 'authentication_bypass', 'authorization_bypass', 'information_disclosure', 'business_logic', 'other'] })
+  @Column({ type: 'varchar', enum: ['xss', 'sql_injection', 'authentication_bypass', 'authorization_bypass', 'information_disclosure', 'business_logic', 'other'] })
   type: FindingType
 
-  @Column({ type: 'enum', enum: ['submitted', 'triaged', 'resolved', 'duplicate', 'not_applicable', 'spam'], default: 'submitted' })
+  @Column({ type: 'varchar', enum: ['submitted', 'triaged', 'resolved', 'duplicate', 'not_applicable', 'spam'], default: 'submitted' })
   status: FindingStatus
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   affected_endpoints: string[]
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   screenshots: {
     url: string
     description: string
   }[]
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata: Record<string, unknown>
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
@@ -63,13 +63,13 @@ export class Finding {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   actual_reward: number
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   submitted_at: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   triaged_at: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   resolved_at: Date
 
   @CreateDateColumn()
@@ -78,10 +78,10 @@ export class Finding {
   @UpdateDateColumn()
   updated_at: Date
 
-  @Column({ name: 'researcher_id', type: 'uuid', nullable: true })
+  @Column({ name: 'researcher_id', type: 'varchar', nullable: true })
   researcher_id: string
 
-  @Column({ name: 'program_id', type: 'uuid', nullable: true })
+  @Column({ name: 'program_id', type: 'varchar', nullable: true })
   program_id: string
 
   @ManyToOne(() => User, user => user.findings)
@@ -92,7 +92,7 @@ export class Finding {
   @JoinColumn({ name: 'program_id' })
   program: Program
 
-  @Column({ name: 'report_id', type: 'uuid', nullable: true })
+  @Column({ name: 'report_id', type: 'varchar', nullable: true })
   report_id: string
 
   @ManyToOne(() => Report, report => report.findings)

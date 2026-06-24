@@ -24,7 +24,7 @@ interface Finding {
   description: string;
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   confidence: number;
-  status: 'new' | 'triaged' | 'confirmed' | 'false_positive' | 'duplicate' | 'accepted' | 'rejected';
+  status: 'submitted' | 'triaged' | 'resolved' | 'duplicate' | 'not_applicable' | 'spam';
   type: 'sql_injection' | 'xss' | 'idor' | 'xxe' | 'ssrf' | 'lfi' | 'command_injection' | 'misconfiguration' | 'information_disclosure';
   target: string;
   cve?: string;
@@ -129,7 +129,7 @@ export const Findings: React.FC = () => {
 
   const handleBulkTriage = async (status: Finding['status']) => {
     // For bulk triage, we'd need a bulk update endpoint or loop through new findings
-    const newFindings = findings.filter(f => f.status === 'new');
+    const newFindings = findings.filter(f => f.status === 'submitted');
     for (const finding of newFindings) {
       await handleTriage(finding.id, status);
     }
@@ -154,19 +154,17 @@ export const Findings: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new':
+      case 'submitted':
         return 'bg-blue-100 text-blue-800';
       case 'triaged':
         return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-red-100 text-red-800';
-      case 'false_positive':
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      case 'not_applicable':
         return 'bg-gray-100 text-gray-800';
       case 'duplicate':
         return 'bg-purple-100 text-purple-800';
-      case 'accepted':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
+      case 'spam':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -372,13 +370,12 @@ export const Findings: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="all">All Status</option>
-                <option value="new">New</option>
+                <option value="submitted">Submitted</option>
                 <option value="triaged">Triaged</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="false_positive">False Positive</option>
+                <option value="resolved">Resolved</option>
+                <option value="not_applicable">Not Applicable</option>
                 <option value="duplicate">Duplicate</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
+                <option value="spam">Spam</option>
               </select>
             </div>
           </div>
@@ -536,13 +533,13 @@ export const Findings: React.FC = () => {
                         <Download className="h-3 w-3 mr-1" />
                         Export Finding
                       </Button>
-                      {finding.status === 'new' && (
+                      {finding.status === 'submitted' && (
                         <>
-                          <Button size="sm" onClick={() => handleTriage(finding.id, 'confirmed')}>
-                            Confirm
+                          <Button size="sm" onClick={() => handleTriage(finding.id, 'resolved')}>
+                            Resolve
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleTriage(finding.id, 'false_positive')}>
-                            False Positive
+                          <Button size="sm" variant="outline" onClick={() => handleTriage(finding.id, 'not_applicable')}>
+                            Not Applicable
                           </Button>
                         </>
                       )}

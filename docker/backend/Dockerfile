@@ -14,7 +14,6 @@ WORKDIR /app
 
 # Copy package manifests
 COPY package*.json ./
-# api/package.json does not exist; dependencies are in root package.json
 
 # Install production dependencies
 RUN npm ci --only=production --legacy-peer-deps && npm cache clean --force
@@ -39,8 +38,8 @@ RUN addgroup -g 1001 -S nodejs && \
 
 COPY --chown=redteam:nodejs . .
 
-# Install dev dependencies for build, then remove them
-RUN npm ci --legacy-peer-deps && npm cache clean --force
+# Exclude native test-only modules from backend production image
+RUN npm pkg delete devDependencies.better-sqlite3 &&     npm ci --legacy-peer-deps && npm cache clean --force
 
 # Build TypeScript backend
 RUN npx tsc -p api/tsconfig.json
@@ -59,5 +58,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 EXPOSE 3001
 
-# dumb-init for proper signal handling (from docker/backend/Dockerfile)
-CMD ["dumb-init", "node", "dist/api/server.js"]
+# Use dumb-init to handle signals properly
+CMD ["dumb-init", "node", "dist/api/start.js"]

@@ -110,8 +110,13 @@ export class MetricsCollector {
 export const metricsMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const start = performance.now()
   const originalSend = res.send
+  let captured = false
 
   res.send = function (data) {
+    if (captured) {
+      return originalSend.call(this, data)
+    }
+    captured = true
     const responseTime = performance.now() - start
     const userId = ((req as unknown as Record<string, { id?: string }>).user)?.id
 

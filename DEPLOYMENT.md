@@ -1,32 +1,52 @@
-# Deployment Guide — RedTeam Automation Platform
+# ZumrutAutomation Deployment Guide
 
-## Prerequisites
+## 1. System Requirements
 
-- Docker 24+
-- Docker Compose v2+
+| Component | Minimum Requirement |
+|-----------|---------------------|
+| Docker | 24.0 or later |
+| Docker Compose | v2.0 or later |
+| CPU | 2 cores |
+| RAM | 4 GB |
+| Disk | 20 GB free space |
+| Network | Ports 80, 3001, 8080, 5433, 6380, 5672, 15672 available on the host |
 
-## Setup
+## 2. Environment Setup
 
-1. **Clone and configure environment:**
+1. Copy the example environment file:
    ```bash
    cp .env.example .env
    ```
 
-2. **Edit `.env` and set:**
-   - `JWT_SECRET` — Generate with: `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`
-   - `ADMIN_EMAIL` — Admin user email
-   - `ADMIN_PASSWORD` — Admin user password
+2. Open `.env` and set strong values for all required secrets:
+   - `JWT_SECRET`
+   - `JWT_REFRESH_SECRET`
+   - `POSTGRES_PASSWORD`
+   - `REDIS_PASSWORD`
+   - `RABBITMQ_PASSWORD`
+   - `DEFAULT_ADMIN_PASSWORD`
 
-3. **Start the platform:**
-   ```bash
-   docker compose up --build -d
-   ```
+   Optional: enable payment or AI modules by setting `STRIPE_SECRET_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`.
 
-4. **Verify health:**
-   ```bash
-   docker compose ps
-   # All 4 containers should show (healthy)
-   ```
+3. Save the file. Do not commit `.env` to version control.
+
+## 3. Start the Platform
+
+Run the complete stack with one command:
+
+```bash
+docker compose up -d
+```
+
+On first launch the platform automatically initializes the database schema and creates the admin user.
+
+## 4. Verify Deployment
+
+```bash
+docker compose ps
+```
+
+All containers should show `healthy`.
 
 ## Access
 
@@ -34,29 +54,18 @@
 |---------|-----|
 | Dashboard | http://localhost |
 | API Health | http://localhost:3001/health |
-| API | http://localhost:3001 |
 
-## Testing
+Log in with the credentials defined in `.env`.
 
-Run end-to-end health checks:
-```bash
-bash scripts/e2e-health-check.sh
-```
-
-## Database Backup
+## Stop or Remove
 
 ```bash
-docker exec redteam-automation-database-1 pg_dump -U postgres redteam_automation > backup_$(date +%Y%m%d_%H%M%S).sql
-```
-
-## Stop
-
-```bash
+# Stop only
 docker compose down
+
+# Stop and remove all data volumes
+docker compose down -v
 ```
 
-## Troubleshooting
-
-- **Containers not healthy:** Check logs with `docker compose logs <service>`
-- **Port conflicts:** Change ports in `docker-compose.yml`
-- **Database issues:** Restore from backup with `docker exec -i redteam-automation-database-1 psql -U postgres redteam_automation < backup.sql`
+---
+© ZumrutAutomation. All rights reserved.

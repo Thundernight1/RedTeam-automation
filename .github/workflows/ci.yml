@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: '22'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   typecheck:
@@ -20,11 +21,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
       - name: Backend compile check
-        run: npx tsc --project api/tsconfig.json --noEmit || true
+        run: npx tsc --project api/tsconfig.json --noEmit
       - name: Frontend build check
-        run: npm run build:frontend || true
+        run: npm run build:frontend
 
   lint:
     name: ESLint
@@ -36,9 +37,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
       - name: Run ESLint
-        run: npx eslint api/ src/ --max-warnings=100 || true
+        run: npm run lint
 
   docker-build:
     name: Docker Build
@@ -46,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker images
-        run: docker compose build || true
+        run: docker compose build
 
   security-audit:
     name: Security Audit
@@ -58,6 +59,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
       - name: npm audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high

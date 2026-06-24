@@ -447,7 +447,7 @@ https://example.com/ssrf.php?url=http://brutelogic.com.br/poc.svg
 * [How I Chained 4 Vulnerabilities on GitHub Enterprise, From SSRF Execution Chain to RCE! - Orange Tsai - July 28, 2017](http://blog.orange.tw/2017/07/how-i-chained-4-vulnerabilities-on.html)
 * [Les Server Side Request Forgery : Comment contourner un pare-feu - Geluchat - September 16, 2017](https://www.dailysecurity.fr/server-side-request-forgery/)
 * [PHP SSRF - @secjuice - theMiddle - March 1, 2018](https://medium.com/secjuice/php-ssrf-techniques-9d422cb28d51)
-* [Piercing the Veil: Server Side Request Forgery to NIPRNet Access - Alyssa Herrera - April 9, 2018](https://medium.com/bugbountywriteup/piercing-the-veil-server-side-request-forgery-to-niprnet-access-c358fd5e249a)
+* [Piercing the Veil: Server Side Request Forgery to NIPRNet Access - Alyssa Herrera - April 9, 2018](https://medium.com/ZumrutAutomationwriteup/piercing-the-veil-server-side-request-forgery-to-niprnet-access-c358fd5e249a)
 * [Server-side Browsing Considered Harmful - Nicolas Grégoire (Agarri) - May 21, 2015](https://www.agarri.fr/docs/AppSecEU15-Server_side_browsing_considered_harmful.pdf)
 * [SSRF - Server-Side Request Forgery (Types and Ways to Exploit It) Part-1 - SaN ThosH (madrobot) - January 10, 2019](https://medium.com/@madrobot/ssrf-server-side-request-forgery-types-and-ways-to-exploit-it-part-1-29d034c27978)
 * [SSRF and Local File Read in Video to GIF Converter - sl1m - February 11, 2016](https://hackerone.com/reports/115857)

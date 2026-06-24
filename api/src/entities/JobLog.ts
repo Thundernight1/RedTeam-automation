@@ -13,16 +13,16 @@ export class JobLog {
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'varchar' })
   job_id!: string
 
-  @Column({ type: 'enum', enum: ['debug', 'info', 'warn', 'error'], default: 'info' })
+  @Column({ type: 'varchar', enum: ['debug', 'info', 'warn', 'error'], default: 'info' })
   log_level!: LogLevel
 
   @Column({ type: 'text' })
   message!: string
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata!: Record<string, unknown>
 
   @CreateDateColumn()

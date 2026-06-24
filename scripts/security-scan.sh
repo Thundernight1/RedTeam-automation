@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Security Scan Script for RedTeam Automation Platform
+# Security Scan Script for ZumrutAutomation
 # This script performs dependency vulnerability scanning and security checks
 
 set -e
@@ -59,7 +59,7 @@ cat > security-reports/scan-summary.txt << EOF
 Security Scan Summary
 =====================
 Date: $(date)
-Repository: RedTeam Automation Platform
+Repository: ZumrutAutomation
 
 Checks Performed:
 ✓ NPM dependency vulnerability scan

@@ -16,22 +16,22 @@ export class Job {
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'varchar' })
   user_id!: string
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   program_id!: string
 
-  @Column({ type: 'enum', enum: ['recon', 'scanning', 'exploitation', 'triage', 'reporting'] })
+  @Column({ type: 'varchar', enum: ['recon', 'scanning', 'exploitation', 'triage', 'reporting'] })
   job_type!: JobType
 
-  @Column({ type: 'enum', enum: ['pending', 'running', 'completed', 'failed', 'cancelled'], default: 'pending' })
+  @Column({ type: 'varchar', enum: ['pending', 'running', 'completed', 'failed', 'cancelled'], default: 'pending' })
   status!: JobStatus
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   parameters!: Record<string, unknown>
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   results!: Record<string, unknown>
 
   @Column({ type: 'text', nullable: true })
@@ -40,10 +40,10 @@ export class Job {
   @Column({ type: 'int', default: 0 })
   retry_count!: number
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   started_at!: Date
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   completed_at!: Date
 
   @CreateDateColumn()

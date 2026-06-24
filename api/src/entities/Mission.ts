@@ -18,10 +18,10 @@ export class Mission {
   @Column({ type: 'varchar', nullable: true })
   scope_hash!: string
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'json', default: '[]' })
   targets!: string
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'json', default: '[]' })
   modules_enabled!: string
 
   @Column({ type: 'varchar', default: 'normal' })
@@ -33,10 +33,10 @@ export class Mission {
   @Column({ type: 'varchar', default: 'pending' })
   status!: MissionStatus
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   started_at!: Date | null
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   completed_at!: Date | null
 
   @CreateDateColumn()

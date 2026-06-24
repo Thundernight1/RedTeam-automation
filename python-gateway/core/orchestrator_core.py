@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-CyberSurhub Enterprise - Orchestrator Core
+ZumrutAutomation - Orchestrator Core
 The Central Nervous System for Autonomous Penetration Testing
 Version: 2.0.0
 Security Level: Enterprise Production
-Author: CyberSurhub Engineering
+Author: Platform Engineering
 """
 
 import os
@@ -47,7 +47,7 @@ logging.basicConfig(
         logging.FileHandler('/app/logs/orchestrator.log', mode='a')
     ]
 )
-logger = logging.getLogger('CyberSurhub.Orchestrator')
+logger = logging.getLogger('Orchestrator')
 
 
 class MissionStatus(Enum):
@@ -157,8 +157,8 @@ class DatabaseManager:
                 maxconn=20,
                 host=self.config.get('host', 'localhost'),
                 port=self.config.get('port', 5432),
-                database=self.config.get('database', 'cybersurhub'),
-                user=self.config.get('user', 'cybersurhub'),
+                database=self.config.get('database', 'redteam_automation'),
+                user=self.config.get('user', 'postgres'),
                 password=self.config.get('password'),
                 connect_timeout=10
             )
@@ -264,7 +264,7 @@ class DatabaseManager:
 class MessageBroker:
     """RabbitMQ message broker for task distribution."""
     
-    EXCHANGE_NAME = 'cybersurhub_exchange'
+    EXCHANGE_NAME = 'platform_exchange'
     TASK_QUEUE = 'task_queue'
     RESULT_QUEUE = 'result_queue'
     
@@ -278,8 +278,8 @@ class MessageBroker:
         """Establish connection to RabbitMQ."""
         try:
             credentials = pika.PlainCredentials(
-                self.config.get('user', 'cybersurhub'),
-                self.config.get('password', 'secure_password')
+                self.config.get('user', 'ZumrutAutomation'),
+                self.config.get('password', '')
             )
             parameters = pika.ConnectionParameters(
                 host=self.config.get('host', 'localhost'),
@@ -691,11 +691,11 @@ class ResultAggregator:
 
 class OrchestratorCore:
     """
-    Main orchestration engine for CyberSurhub Enterprise.
+    Main orchestration engine for ZumrutAutomation.
     Coordinates all components and manages mission lifecycle.
     """
     
-    def __init__(self, config_path: str = '/etc/cybersurhub/config.json'):
+    def __init__(self, config_path: str = '/etc/platform/config.json'):
         self.config_path = config_path
         self.config: Dict = {}
         self.db: Optional[DatabaseManager] = None
@@ -734,15 +734,15 @@ class OrchestratorCore:
             'database': {
                 'host': os.getenv('DB_HOST', 'postgres'),
                 'port': int(os.getenv('DB_PORT', 5432)),
-                'database': os.getenv('DB_NAME', 'cybersurhub'),
-                'user': os.getenv('DB_USER', 'cybersurhub'),
-                'password': os.getenv('DB_PASSWORD', 'secure_password')
+                'database': os.getenv('DB_NAME', 'redteam_automation'),
+                'user': os.getenv('DB_USER', 'postgres'),
+                'password': os.getenv('DB_PASSWORD', '')
             },
             'broker': {
                 'host': os.getenv('RABBITMQ_HOST', 'rabbitmq'),
                 'port': int(os.getenv('RABBITMQ_PORT', 5672)),
-                'user': os.getenv('RABBITMQ_USER', 'cybersurhub'),
-                'password': os.getenv('RABBITMQ_PASSWORD', 'secure_password'),
+                'user': os.getenv('RABBITMQ_USER', 'platform'),
+                'password': os.getenv('RABBITMQ_PASSWORD', ''),
                 'vhost': os.getenv('RABBITMQ_VHOST', '/')
             },
             'redis': {
@@ -760,7 +760,7 @@ class OrchestratorCore:
     
     def initialize(self) -> bool:
         """Initialize all components."""
-        logger.info("Initializing CyberSurhub Orchestrator Core...")
+        logger.info("Initializing ZumrutAutomation Orchestrator Core...")
         
         # Load configuration
         if not self.load_config():
@@ -793,7 +793,7 @@ class OrchestratorCore:
         self.dispatcher = TaskDispatcher(self.broker, self.cache)
         self.aggregator = ResultAggregator(self.db, self.cache)
         
-        logger.info("CyberSurhub Orchestrator Core initialized successfully")
+        logger.info("ZumrutAutomation Orchestrator Core initialized successfully")
         return True
     
     def load_mission(self, mission_config_path: str) -> Optional[MissionConfig]:
@@ -934,7 +934,7 @@ class OrchestratorCore:
         # Start result consumer
         self.start_result_consumer()
         
-        logger.info("CyberSurhub Orchestrator Core is running")
+        logger.info("ZumrutAutomation Orchestrator Core is running")
         
         # Keep the main thread alive
         while self.running and not self._shutdown_event.is_set():
@@ -950,7 +950,7 @@ class OrchestratorCore:
     
     def shutdown(self):
         """Graceful shutdown of all components."""
-        logger.info("Shutting down CyberSurhub Orchestrator...")
+        logger.info("Shutting down ZumrutAutomation Orchestrator...")
         
         if self.dispatcher:
             self.dispatcher.shutdown()
@@ -964,13 +964,13 @@ class OrchestratorCore:
         if self.db:
             self.db.close()
         
-        logger.info("CyberSurhub Orchestrator shutdown complete")
+        logger.info("ZumrutAutomation Orchestrator shutdown complete")
 
 
 def main():
     """Main entry point."""
     # Ensure log directory exists
-    log_dir = Path('/var/log/cybersurhub')
+    log_dir = Path('/var/log/platform')
     log_dir.mkdir(parents=True, exist_ok=True)
     
     orchestrator = OrchestratorCore()

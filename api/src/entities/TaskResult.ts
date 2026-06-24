@@ -7,7 +7,7 @@ export class TaskResult {
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'varchar' })
   mission_id!: string
 
   @Column({ type: 'varchar', nullable: true })
@@ -22,7 +22,7 @@ export class TaskResult {
   @Column({ type: 'varchar', default: 'pending' })
   status!: string
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   findings!: string
 
   @Column({ type: 'float', default: 0 })
@@ -31,13 +31,13 @@ export class TaskResult {
   @Column({ type: 'float', nullable: true })
   execution_time!: number
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   raw_output!: string
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   started_at!: Date | null
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   completed_at!: Date | null
 
   @CreateDateColumn()

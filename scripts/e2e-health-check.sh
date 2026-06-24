@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# E2E Health Check for RedTeam Automation Platform
+# E2E Health Check for ZumrutAutomation
 # Reads credentials from .env file
 
 set -e
@@ -16,7 +16,7 @@ if [ -f .env ]; then
 fi
 
 # Default values if not set
-ADMIN_EMAIL="${ADMIN_EMAIL:-admin@cybersurhub.com}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@zumrutautomation.com}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin@12345!}"
 
 # Counters
@@ -45,7 +45,7 @@ echo ""
 
 # Test 1: All 4 containers running
 echo "Test 1: Checking containers..."
-CONTAINER_COUNT=$(docker ps --filter "name=redteam-automation" --format "{{.Names}}" | wc -l | tr -d ' ')
+CONTAINER_COUNT=$(docker ps --filter "name=zumrutautomation" --format "{{.Names}}" | wc -l | tr -d ' ')
 run_test "All 4 containers running" "4" "$CONTAINER_COUNT"
 
 # Test 2: API health endpoint
@@ -70,7 +70,7 @@ TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 echo "Test 4: Login with wrong password..."
 WRONG_PASS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3001/api/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"email":"admin@cybersurhub.com","password":"wrongpassword"}')
+    -d '{"email":"admin@zumrutautomation.com","password":"wrongpassword"}')
 run_test "Login with wrong password returns 401" "401" "$WRONG_PASS_STATUS"
 
 # Test 5: Access protected route without token

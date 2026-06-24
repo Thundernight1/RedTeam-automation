@@ -4,6 +4,8 @@ import { body, validationResult } from 'express-validator'
 import rateLimit from 'express-rate-limit'
 import { AppDataSource } from '../src/config/data-source.js'
 import { User } from '../src/entities/User.js'
+import { JWTPayload, ROLE_PERMISSIONS } from '../src/config/auth.js'
+import type { StringValue } from 'ms'
 
 const router = Router()
 
@@ -38,11 +40,16 @@ const validateLogin = [
 ]
 
 const generateToken = (user: User): string => {
-  const payload = { id: user.id, email: user.email, role: user.role }
+  const payload: JWTPayload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    permissions: ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] || []
+  }
   const options: jwt.SignOptions = { 
-    expiresIn: JWT_EXPIRES_IN as any,
-    issuer: 'bugbounty-platform',
-    audience: 'bugbounty-users'
+    expiresIn: JWT_EXPIRES_IN as StringValue,
+    issuer: 'ZumrutAutomation-platform',
+    audience: 'ZumrutAutomation-users'
   }
   return jwt.sign(payload, JWT_SECRET, options)
 }
@@ -56,10 +63,11 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const token = authHeader.split(' ')[1]
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
-      issuer: 'bugbounty-platform',
-      audience: 'bugbounty-users'
-    })
-      ; (req as any).user = decoded
+      issuer: 'ZumrutAutomation-platform',
+      audience: 'ZumrutAutomation-users'
+    }) as JWTPayload
+    decoded.permissions = ROLE_PERMISSIONS[decoded.role as keyof typeof ROLE_PERMISSIONS] || []
+    ;(req as any).user = decoded
     next()
   } catch {
     res.status(401).json({ error: 'Unauthorized' })
@@ -142,14 +150,14 @@ router.get('/profile', authenticate, async (req: Request, res: Response): Promis
     const userRepository = AppDataSource.getRepository(User)
     const user = await userRepository.findOne({
       where: { id: (req as any).user?.id as string },
-      select: { id: true, email: true, name: true, role: true }
+      select: { id: true, email: true, name: true, role: true, created_at: true, updated_at: true }
     })
 
     if (!user) {
       res.status(404).json({ error: 'User not found' })
       return
     }
-    res.json(user)
+    res.json({ success: true, data: user })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Internal server error' })

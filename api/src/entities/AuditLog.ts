@@ -22,7 +22,7 @@ export class AuditLog {
   @Column({ type: 'varchar', nullable: true })
   action!: string
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   details!: string
 
   @Column({ type: 'varchar', nullable: true })

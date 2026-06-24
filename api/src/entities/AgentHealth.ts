@@ -11,7 +11,7 @@ export class AgentHealth {
   @Column({ type: 'varchar', default: 'unknown' })
   status!: string
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: Date, nullable: true })
   last_heartbeat!: Date | null
 
   @Column({ type: 'int', default: 0 })
